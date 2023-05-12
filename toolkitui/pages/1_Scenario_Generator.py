@@ -17,7 +17,6 @@ def render_scenarios(service: gato.service.GatoService, num_scenarios: int):
         for k in range(num_scenarios):
             scenario = service.create_scenario()
             storage.save_scenario(scenario)
-            # endpoints.save_scenario(scenario)
             progress = (k + 1) / num_scenarios
             if progress == 1:
                 progress_text = f"COMPLETE: Generated {num_scenarios} scenarios."
