@@ -1,27 +1,20 @@
 import os
-import pathlib
 
 import streamlit
-import yaml
 
 import gato.entity
 import gato.llm
 import gato.service
 
 
-def save_scenario(scenario: gato.entity.Scenario):
-    with open(pathlib.Path("../data/scenarios")) as file:
-        yaml.safe_dump(scenario.dict(), file)
-
-
-def render_scenarios(service: gato.service.GatoService, num_scenarios: int):
+def render_actions(service: gato.service.GatoService, num_scenarios: int):
     progress_text = f"Generating {num_scenarios} scenarios. Please wait."
     my_bar = streamlit.progress(0, text=progress_text)
     container = streamlit.container()
 
     with streamlit.spinner():
         for k in range(num_scenarios):
-            scenario = service.create_scenario()
+            scenario = service.create_action()
             # endpoints.save_scenario(scenario)
             progress = (k + 1) / num_scenarios
             if progress == 1:
@@ -46,7 +39,7 @@ def render_scenario_generator():
     if streamlit.button("Generate Scenarios"):
         model = gato.llm.LLM(api_key)
         service = gato.service.GatoService(model)
-        render_scenarios(service, num_scenarios)
+        render_actions(service, num_scenarios)
 
 
 def main():
