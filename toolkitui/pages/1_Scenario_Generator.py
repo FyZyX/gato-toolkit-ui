@@ -1,11 +1,11 @@
 import os
-import streamlit
 
 import gato.entity
 import gato.llm
 import gato.service
+import streamlit
 
-from .. import storage
+from toolkitui import storage
 
 
 def render_scenarios(service: gato.service.GatoService, num_scenarios: int):

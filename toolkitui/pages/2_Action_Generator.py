@@ -1,49 +1,62 @@
 import os
-
-import streamlit
+import pathlib
+from typing import Iterable
 
 import gato.entity
 import gato.llm
 import gato.service
+import streamlit
+
+from toolkitui import storage
 
 
-def render_actions(service: gato.service.GatoService, num_scenarios: int):
-    progress_text = f"Generating {num_scenarios} scenarios. Please wait."
+def render_actions(
+        service: gato.service.GatoService,
+        scenarios: Iterable[gato.entity.Scenario],
+        num_actions: int,
+):
+    progress_text = f"Generating {num_actions} actions. Please wait."
     my_bar = streamlit.progress(0, text=progress_text)
     container = streamlit.container()
 
     with streamlit.spinner():
-        for k in range(num_scenarios):
-            scenario = service.create_action()
-            # endpoints.save_scenario(scenario)
-            progress = (k + 1) / num_scenarios
+        for k, scenario in enumerate(scenarios):
+            action = service.create_action(scenario)
+            storage.save_action(scenario, action)
+            progress = (k + 1) / num_actions
             if progress == 1:
-                progress_text = f"COMPLETE: Generated {num_scenarios} scenarios."
+                progress_text = f"COMPLETE: Generated {num_actions} actions."
             else:
-                progress_text = f"Generated {k + 1} of {num_scenarios} scenario." \
+                progress_text = f"Generated {k + 1} of {num_actions} actions." \
                                 f" Please wait."
-            my_bar.progress((k + 1) / num_scenarios, text=progress_text)
-            container.write(scenario.description)
-            container.write(f"Scenario ID: {scenario.id}")
+            my_bar.progress((k + 1) / num_actions, text=progress_text)
+            container.write(action.description)
+            container.write(f"Action ID: {action.id}")
             container.divider()
 
 
-def render_scenario_generator():
-    streamlit.header("Generate Scenarios")
+def render_action_generator():
+    streamlit.header("Generate Actions")
     api_key = streamlit.text_input("OpenAI API Key", os.environ.get("OPENAI_API_KEY"))
-    num_scenarios = streamlit.number_input(
-        "Number of scenarios to generate",
-        min_value=1, value=1,
-    )
+    base_path = pathlib.Path(__file__).parent.parent.parent
+    path = base_path / pathlib.Path("data/actions")
+    complete_scenarios = {f.name.replace("action", "scenario") for f in path.iterdir()}
+    path = base_path / pathlib.Path("data/scenarios")
+    all_scenarios = {f.name for f in path.iterdir()}
+    all_scenarios -= complete_scenarios
+    all_scenarios = [storage.load_scenario(s) for s in all_scenarios]
+    options = [s.id for s in all_scenarios]
+    choices = streamlit.multiselect("Scenarios", options=options, default=options[:2])
 
-    if streamlit.button("Generate Scenarios"):
+    if streamlit.button("Generate Actions"):
         model = gato.llm.LLM(api_key)
+        scenarios = list(filter(lambda s: s.id in choices, all_scenarios))
         service = gato.service.GatoService(model)
-        render_actions(service, num_scenarios)
+        render_actions(service, scenarios, len(scenarios))
 
 
 def main():
-    render_scenario_generator()
+    render_action_generator()
 
 
 if __name__ == '__main__':
