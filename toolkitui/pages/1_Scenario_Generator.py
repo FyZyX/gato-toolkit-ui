@@ -15,7 +15,9 @@ def render_scenarios(service: gato.service.GatoService, num_scenarios: int):
 
     with streamlit.spinner():
         for k in range(num_scenarios):
-            scenario = service.create_scenario()
+            params = service.create_scenario_parameters()
+            prompt = service.create_scenario_prompt(params)
+            scenario = service.create_scenario(prompt)
             storage.save_scenario(scenario)
             progress = (k + 1) / num_scenarios
             if progress == 1:

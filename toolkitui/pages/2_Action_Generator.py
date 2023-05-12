@@ -21,7 +21,8 @@ def render_actions(
 
     with streamlit.spinner():
         for k, scenario in enumerate(scenarios):
-            action = service.create_action(scenario)
+            prompt = service.create_action_prompt(scenario)
+            action = service.create_action(prompt)
             storage.save_action(scenario, action)
             progress = (k + 1) / num_actions
             if progress == 1:
@@ -44,7 +45,8 @@ def render_action_generator():
     path = base_path / pathlib.Path("data/scenarios")
     all_scenarios = {f.name for f in path.iterdir()}
     all_scenarios -= complete_scenarios
-    all_scenarios = [storage.load_scenario(s) for s in all_scenarios]
+    all_scenarios = [storage.load_scenario(s.removesuffix(".yml"))
+                     for s in all_scenarios]
     options = [s.id for s in all_scenarios]
     choices = streamlit.multiselect("Scenarios", options=options, default=options[:2])
 
