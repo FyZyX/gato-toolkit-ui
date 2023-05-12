@@ -1,1 +1,2 @@
+gato-toolkit==0.1.0-rc3
 streamlit~=1.22.0
