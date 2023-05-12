@@ -1,10 +1,17 @@
 import os
+import pathlib
 
 import streamlit
+import yaml
 
 import gato.entity
 import gato.llm
 import gato.service
+
+
+def save_scenario(scenario: gato.entity.Scenario):
+    with open(pathlib.Path("../data/scenarios")) as file:
+        yaml.safe_dump(scenario.dict(), file)
 
 
 def render_scenarios(service: gato.service.GatoService, num_scenarios: int):
