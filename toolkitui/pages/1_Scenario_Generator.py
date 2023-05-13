@@ -52,8 +52,8 @@ def render_scenario_generator():
                     if not task.ready():
                         continue
                     scenario = task.get()
-                    scenario_tasks.remove(task)
                     storage.save_scenario(scenario)
+                    scenario_tasks.remove(task)
                     render_scenario(scenario, container)
                     done += 1
 

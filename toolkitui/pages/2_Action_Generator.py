@@ -1,6 +1,5 @@
 import json
 import os
-import pathlib
 
 import celery.result
 import gato.entity
@@ -66,6 +65,7 @@ def render_action_generator():
                     action = task.get()
                     scenario = scenarios[k]
                     storage.save_action(scenario, action)
+                    action_tasks.remove(action)
                     render_action(action, container)
                     done += 1
 
