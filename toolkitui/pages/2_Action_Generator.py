@@ -65,7 +65,7 @@ def render_action_generator():
                     action = task.get()
                     scenario = scenarios[k]
                     storage.save_action(scenario, action)
-                    action_tasks.remove(action)
+                    action_tasks.remove(task)
                     render_action(action, container)
                     done += 1
 
