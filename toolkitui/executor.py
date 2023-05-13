@@ -1,6 +1,7 @@
 import asyncio
 import os
 
+import gato.entity
 import gato.llm
 import gato.service
 from celery import Celery
@@ -39,9 +40,22 @@ async def generate_scenario(api_key: str):
     return await service.create_scenario(prompt)
 
 
+async def generate_action(api_key: str, scenario_data: dict):
+    model = gato.llm.LLM(api_key)
+    service = gato.service.GatoService(model)
+    scenario = gato.entity.Scenario(**scenario_data)
+    prompt = service.create_action_prompt(scenario)
+    return await service.create_action(prompt)
+
+
 @app.task
 def generate_scenario_task(api_key: str):
     return run_task(generate_scenario, api_key)
+
+
+@app.task
+def generate_action_task(api_key: str, scenario_data: dict):
+    return run_task(generate_action, api_key, scenario_data)
 
 
 if __name__ == '__main__':

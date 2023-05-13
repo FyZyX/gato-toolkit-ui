@@ -20,7 +20,7 @@ def schedule_action_tasks(
     action_tasks = []
     with streamlit.spinner():
         for k, scenario in enumerate(scenarios):
-            task = executor.generate_action_task.delay(api_key)
+            task = executor.generate_action_task.delay(api_key, scenario.dict())
             action_tasks.append(task)
             progress = (k + 1) / num_actions
             if progress == 1:
