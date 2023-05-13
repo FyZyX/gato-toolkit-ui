@@ -4,7 +4,7 @@ streamlit.set_page_config(page_title="GATO Data Generator")
 
 
 def main():
-    streamlit.title("RLHI Data Generator")
+    streamlit.title("GATO Toolkit")
 
     streamlit.markdown("""
     Welcome to the RLHI Data Generator. This tool is designed to facilitate 
