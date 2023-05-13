@@ -14,7 +14,7 @@ def schedule_action_tasks(
         scenarios: list[gato.entity.Scenario],
 ) -> list[celery.result.AsyncResult]:
     num_actions = len(scenarios)
-    progress_text = f"Generating {num_actions} actions. Please wait."
+    progress_text = f"Scheduling {num_actions} actions. Please wait."
     my_bar = streamlit.progress(0, text=progress_text)
 
     action_tasks = []
@@ -26,9 +26,9 @@ def schedule_action_tasks(
             action_tasks.append(task)
             progress = (k + 1) / num_actions
             if progress == 1:
-                progress_text = f"COMPLETE: Generated {num_actions} actions."
+                progress_text = f"Scheduled {num_actions} actions."
             else:
-                progress_text = f"Generated {k + 1} of {num_actions} actions." \
+                progress_text = f"Scheduled {k + 1} of {num_actions} actions." \
                                 f" Please wait."
             my_bar.progress((k + 1) / num_actions, text=progress_text)
     return action_tasks
