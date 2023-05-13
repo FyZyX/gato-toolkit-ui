@@ -6,7 +6,7 @@ import gato.service
 import streamlit
 import celery.result
 
-from .. import tasks
+from toolkitui import tasks
 
 
 def schedule_scenario_tasks(
