@@ -60,12 +60,13 @@ def render_action_generator():
         done = 0
         with streamlit.spinner():
             while done < len(scenarios):
-                for task in action_tasks:
+                for k, task in enumerate(action_tasks):
                     if not task.ready():
                         continue
-                    scenario = task.get()
-                    storage.save_scenario(scenario)
-                    render_action(scenario, container)
+                    action = task.get()
+                    scenario = scenarios[k]
+                    storage.save_action(scenario, action)
+                    render_action(action, container)
                     done += 1
 
 
