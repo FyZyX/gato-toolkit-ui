@@ -7,7 +7,7 @@ import gato.llm
 import gato.service
 import streamlit
 
-from toolkitui import storage
+from .. import storage
 
 
 def render_actions(

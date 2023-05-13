@@ -6,7 +6,7 @@ services:
       - "8501:8501"
     command: streamlit run RLHI_Data_Generator.py
     volumes:
-      - toolkitui:/app/toolkitui
+      - ./toolkitui:/app/toolkitui
     env_file:
       - .env
     depends_on:
@@ -15,9 +15,9 @@ services:
     image: "redis:alpine"
   worker:
     build: .
-    command: celery -A toolkitui.executor.app worker
+    command: celery -A executor.app worker
     volumes:
-      - toolkitui:/app/toolkitui
+      - ./toolkitui:/app/toolkitui
     depends_on:
       - web
       - redis
