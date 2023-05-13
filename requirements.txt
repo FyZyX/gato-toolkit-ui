@@ -1,5 +1,4 @@
 celery~=5.2.7
 gato-toolkit~=0.3.0
-PyYAML~=6.0
 redis>=4.5.5
 streamlit~=1.22.0
