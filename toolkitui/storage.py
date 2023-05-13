@@ -25,6 +25,12 @@ def save_action(scenario: gato.entity.Scenario, action: gato.entity.Action):
     _REDIS_CLIENT.set(key, action_data)
 
 
+def load_action(key) -> gato.entity.Action:
+    action_data = _REDIS_CLIENT.get(key)
+    action_dict = json.loads(action_data)
+    return gato.entity.Action(**action_dict)
+
+
 def list_scenarios() -> list[str]:
     return _REDIS_CLIENT.keys(pattern="scenario_*")
 
