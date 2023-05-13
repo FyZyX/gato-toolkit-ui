@@ -48,7 +48,7 @@ See our [design doc](docs/DESIGN.md) for details.
 
 ## Contributing
 
-Contributions to the RLHI Data Generator are welcome! Please read our [contributing guidelines](docs/CONTRIBUTING.md) and [code of conduct](docs/CODE-OF-CONDUCT.md) before you start.
+Contributions to the GATO Toolkit UI are welcome! Please read our [contributing guidelines](docs/CONTRIBUTING.md) and [code of conduct](docs/CODE-OF-CONDUCT.md) before you start.
 
 ## License
 
