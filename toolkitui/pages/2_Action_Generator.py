@@ -1,3 +1,4 @@
+import json
 import os
 import pathlib
 
@@ -20,7 +21,9 @@ def schedule_action_tasks(
     action_tasks = []
     with streamlit.spinner():
         for k, scenario in enumerate(scenarios):
-            task = executor.generate_action_task.delay(api_key, scenario.dict())
+            task = executor.generate_action_task.delay(
+                api_key, json.loads(scenario.json()),
+            )
             action_tasks.append(task)
             progress = (k + 1) / num_actions
             if progress == 1:
@@ -41,14 +44,11 @@ def render_action(action: gato.entity.Action, container):
 def render_action_generator():
     streamlit.header("Generate Actions")
     api_key = streamlit.text_input("OpenAI API Key", os.environ.get("OPENAI_API_KEY"))
-    base_path = pathlib.Path(__file__).parent.parent.parent
-    path = base_path / pathlib.Path("data/actions")
-    complete_scenarios = {f.name.replace("action", "scenario") for f in path.iterdir()}
-    path = base_path / pathlib.Path("data/scenarios")
-    all_scenarios = {f.name for f in path.iterdir()}
+    action_keys = storage.list_actions()
+    complete_scenarios = {key.replace("action", "scenario") for key in action_keys}
+    all_scenarios = set(storage.list_scenarios())
     all_scenarios -= complete_scenarios
-    all_scenarios = [storage.load_scenario(s.removesuffix(".yml"))
-                     for s in all_scenarios]
+    all_scenarios = [storage.load_scenario(s) for s in all_scenarios]
     options = [s.id for s in all_scenarios]
     choices = streamlit.multiselect("Scenarios", options=options, default=options[:2])
 
