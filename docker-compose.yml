@@ -9,11 +9,18 @@ services:
       - .env
     depends_on:
       - redis
-  redis:
-    image: "redis:alpine"
+      - worker
+
   worker:
     build: .
     command: celery -A toolkitui.executor.app worker
     depends_on:
-      - web
       - redis
+
+  redis:
+    image: "redis:alpine"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
