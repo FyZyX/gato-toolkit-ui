@@ -9,9 +9,10 @@ def render_action(
         action: gato.entity.Action,
         container
 ):
-    container.subheader(f"Scenario")
+    container.header(scenario.id)
+    container.subheader("Scenario")
     container.write(scenario.description)
-    container.subheader(f"Action")
+    container.subheader("Action")
     container.write(action.description)
     container.divider()
 
@@ -19,7 +20,7 @@ def render_action(
 def main():
     keys = storage.list_actions()
     action_keys = streamlit.multiselect("Actions", options=keys)
-    scenario_keys = [key.replace("action", "scenario") for key in keys]
+    scenario_keys = [key.replace("action", "scenario") for key in action_keys]
     container = streamlit.container()
 
     for scenario_key, action_key in zip(scenario_keys, action_keys):
