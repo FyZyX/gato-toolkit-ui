@@ -4,31 +4,35 @@ import gato.entity
 import gato.llm
 import gato.service
 import streamlit
+import celery.result
 
-from toolkitui import storage
+from toolkitui import tasks
 
 
-def render_scenarios(service: gato.service.GatoService, num_scenarios: int):
-    progress_text = f"Generating {num_scenarios} scenarios. Please wait."
+def schedule_scenario_tasks(
+        service: gato.service.GatoService, num_scenarios: int
+) -> list[celery.result.AsyncResult]:
+    progress_text = f"Scheduling {num_scenarios} scenarios. Please wait."
     my_bar = streamlit.progress(0, text=progress_text)
-    container = streamlit.container()
+    scenario_tasks = []
 
-    with streamlit.spinner():
-        for k in range(num_scenarios):
-            params = service.create_scenario_parameters()
-            prompt = service.create_scenario_prompt(params)
-            scenario = service.create_scenario(prompt)
-            storage.save_scenario(scenario)
-            progress = (k + 1) / num_scenarios
-            if progress == 1:
-                progress_text = f"COMPLETE: Generated {num_scenarios} scenarios."
-            else:
-                progress_text = f"Generated {k + 1} of {num_scenarios} scenario." \
-                                f" Please wait."
-            my_bar.progress((k + 1) / num_scenarios, text=progress_text)
-            container.write(scenario.description)
-            container.write(f"Scenario ID: {scenario.id}")
-            container.divider()
+    for k in range(num_scenarios):
+        task = tasks.generate_scenario_task.delay(service)
+        scenario_tasks.append(task)
+        progress = (k + 1) / num_scenarios
+        if progress == 1:
+            progress_text = f"Scheduled {num_scenarios} scenarios."
+        else:
+            progress_text = f"Scheduled {k + 1} of {num_scenarios} scenario." \
+                            f" Please wait."
+        my_bar.progress((k + 1) / num_scenarios, text=progress_text)
+    return scenario_tasks
+
+
+def render_scenario(scenario: gato.entity.Scenario, container):
+    container.write(scenario.description)
+    container.write(f"Scenario ID: {scenario.id}")
+    container.divider()
 
 
 def render_scenario_generator():
@@ -38,11 +42,21 @@ def render_scenario_generator():
         "Number of scenarios to generate",
         min_value=1, value=1,
     )
-
     if streamlit.button("Generate Scenarios"):
         model = gato.llm.LLM(api_key)
         service = gato.service.GatoService(model)
-        render_scenarios(service, num_scenarios)
+        scenario_tasks = schedule_scenario_tasks(service, num_scenarios)
+
+        container = streamlit.container()
+        done = 0
+        with streamlit.spinner():
+            while done < num_scenarios:
+                for task in scenario_tasks:
+                    if not task.ready():
+                        continue
+                    scenario = task.get()
+                    render_scenario(scenario, container)
+                    done += 1
 
 
 def main():
