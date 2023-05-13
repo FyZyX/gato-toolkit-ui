@@ -4,7 +4,7 @@ services:
     build: .
     ports:
       - "8501:8501"
-    command: streamlit run toolkitui/RLHI_Data_Generator.py
+    command: streamlit run toolkitui/GATO_Toolkit.py
     env_file:
       - .env
     depends_on:
