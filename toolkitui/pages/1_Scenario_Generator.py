@@ -1,23 +1,22 @@
 import os
 
 import gato.entity
-import gato.llm
 import gato.service
 import streamlit
 import celery.result
 
-from toolkitui import tasks
+from toolkitui import executor
 
 
 def schedule_scenario_tasks(
-        service: gato.service.GatoService, num_scenarios: int
+        api_key: str, num_scenarios: int
 ) -> list[celery.result.AsyncResult]:
     progress_text = f"Scheduling {num_scenarios} scenarios. Please wait."
     my_bar = streamlit.progress(0, text=progress_text)
     scenario_tasks = []
 
     for k in range(num_scenarios):
-        task = tasks.generate_scenario_task.delay(service)
+        task = executor.generate_scenario_task.delay(api_key)
         scenario_tasks.append(task)
         progress = (k + 1) / num_scenarios
         if progress == 1:
@@ -43,9 +42,7 @@ def render_scenario_generator():
         min_value=1, value=1,
     )
     if streamlit.button("Generate Scenarios"):
-        model = gato.llm.LLM(api_key)
-        service = gato.service.GatoService(model)
-        scenario_tasks = schedule_scenario_tasks(service, num_scenarios)
+        scenario_tasks = schedule_scenario_tasks(api_key, num_scenarios)
 
         container = streamlit.container()
         done = 0
