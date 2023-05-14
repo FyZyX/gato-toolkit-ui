@@ -1,5 +1,6 @@
 import json
 import os
+import time
 
 import celery.result
 import gato.entity
@@ -13,10 +14,9 @@ def schedule_tasks(
         api_key: str,
         scenarios: list[gato.entity.Scenario],
 ) -> list[celery.result.AsyncResult]:
-    with streamlit.spinner():
-        return [executor.generate_action_task.delay(
-            api_key, json.loads(scenario.json()),
-        ) for k, scenario in enumerate(scenarios)]
+    return [executor.generate_action_task.delay(
+        api_key, json.loads(scenario.json()),
+    ) for k, scenario in enumerate(scenarios)]
 
 
 def render_action(action: gato.entity.Action, container):
@@ -34,6 +34,22 @@ def update_progress(progress_bar, done, total):
     progress_bar.progress(done / total, text=progress_text)
 
 
+def get_complete_tasks(tasks):
+    return (task for task in tasks if task.ready())
+
+
+def wait_for_results(progress_bar, tasks):
+    total, complete = len(tasks), 0
+    while complete < total:
+        for task in get_complete_tasks(tasks):
+            result = task.get()
+            tasks.remove(task)
+            complete += 1
+            update_progress(progress_bar, complete, total)
+            yield result
+            time.sleep(0.1)
+
+
 def render_action_generator():
     streamlit.header("Generate Actions")
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -48,25 +64,18 @@ def render_action_generator():
 
     if streamlit.button("Generate Actions"):
         scenarios = list(filter(lambda s: s.id in choices, all_scenarios))
-        action_tasks = schedule_tasks(api_key, scenarios)
+        with streamlit.spinner():
+            action_tasks = schedule_tasks(api_key, scenarios)
 
         num_actions = len(action_tasks)
         progress_text = f"Waiting for {num_actions} tasks. Please wait."
         progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
-        done = 0
         with streamlit.spinner():
-            while done < num_actions:
-                for k, task in enumerate(action_tasks):
-                    if not task.ready():
-                        continue
-                    action = task.get()
-                    scenario = scenarios[k]
-                    storage.save_action(scenario, action)
-                    action_tasks.remove(task)
-                    render_action(action, container)
-                    done += 1
-                    update_progress(progress_bar, done, num_actions)
+            for k, action in enumerate(wait_for_results(progress_bar, action_tasks)):
+                scenario = scenarios[k]
+                storage.save_action(scenario, action)
+                render_action(action, container)
 
 
 def main():
