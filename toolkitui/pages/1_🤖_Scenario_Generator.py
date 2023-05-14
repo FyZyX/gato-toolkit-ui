@@ -49,7 +49,7 @@ def wait_for_results(progress_bar, tasks):
 
 def render_scenario_generator():
     streamlit.header("Generate Scenarios")
-    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = os.environ.get("OPENAI_API_KEY", "")
     api_key = streamlit.text_input("OpenAI API Key", value=api_key, type="password")
     num_scenarios = streamlit.number_input(
         "Number of scenarios to generate",
