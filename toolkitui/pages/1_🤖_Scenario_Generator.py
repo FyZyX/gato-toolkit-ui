@@ -11,17 +11,24 @@ from toolkitui import executor, storage
 def schedule_scenario_tasks(
         api_key: str, num_scenarios: int
 ) -> list[celery.result.AsyncResult]:
-    scenario_tasks = []
-    for k in range(num_scenarios):
-        task = executor.generate_scenario_task.delay(api_key)
-        scenario_tasks.append(task)
-    return scenario_tasks
+    with streamlit.spinner():
+        return [executor.generate_scenario_task.delay(api_key)
+                for _ in range(num_scenarios)]
 
 
 def render_scenario(scenario: gato.entity.Scenario, container):
     container.write(scenario.description)
     container.write(f"Scenario ID: {scenario.id}")
     container.divider()
+
+
+def update_progress(progress_bar, done, total):
+    if done == total:
+        progress_text = f"Completed all {total} tasks."
+    else:
+        progress_text = f"Completed {done} of {total} " \
+                        f"tasks. Please wait."
+    progress_bar.progress(done / total, text=progress_text)
 
 
 def render_scenario_generator():
@@ -35,7 +42,7 @@ def render_scenario_generator():
     if streamlit.button("Generate Scenarios"):
         scenario_tasks = schedule_scenario_tasks(api_key, num_scenarios)
 
-        progress_text = f"Scheduling {num_scenarios} scenarios. Please wait."
+        progress_text = f"Waiting for {num_scenarios} tasks. Please wait."
         progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
         done = 0
@@ -49,13 +56,7 @@ def render_scenario_generator():
                     scenario_tasks.remove(task)
                     render_scenario(scenario, container)
                     done += 1
-                    progress = done / num_scenarios
-                    if progress == 1:
-                        progress_text = f"Completed {num_scenarios} scenarios."
-                    else:
-                        progress_text = f"Completed {done} of {num_scenarios} " \
-                                        f"scenario. Please wait."
-                    progress_bar.progress(done / num_scenarios, text=progress_text)
+                    update_progress(progress_bar, done, num_scenarios)
 
 
 def main():
