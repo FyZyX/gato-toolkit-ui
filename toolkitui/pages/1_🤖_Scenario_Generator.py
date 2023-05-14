@@ -22,13 +22,17 @@ def render_scenario(scenario: gato.entity.Scenario, container):
     container.divider()
 
 
-def update_progress(progress_bar, done, total):
-    if done == total:
+def get_complete_tasks(tasks):
+    return (task for task in tasks if task.ready())
+
+
+def update_progress(progress_bar, complete, total):
+    if complete == total:
         progress_text = f"Completed all {total} tasks."
     else:
-        progress_text = f"Completed {done} of {total} " \
+        progress_text = f"Completed {complete} of {total} " \
                         f"tasks. Please wait."
-    progress_bar.progress(done / total, text=progress_text)
+    progress_bar.progress(complete / total, text=progress_text)
 
 
 def render_scenario_generator():
@@ -45,18 +49,16 @@ def render_scenario_generator():
         progress_text = f"Waiting for {num_scenarios} tasks. Please wait."
         progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
-        done = 0
+        complete = 0
         with streamlit.spinner():
-            while done < num_scenarios:
-                for task in scenario_tasks:
-                    if not task.ready():
-                        continue
+            while complete < num_scenarios:
+                for task in get_complete_tasks(scenario_tasks):
                     scenario = task.get()
                     storage.save_scenario(scenario)
                     scenario_tasks.remove(task)
                     render_scenario(scenario, container)
-                    done += 1
-                    update_progress(progress_bar, done, num_scenarios)
+                    complete += 1
+                    update_progress(progress_bar, complete, num_scenarios)
 
 
 def main():
