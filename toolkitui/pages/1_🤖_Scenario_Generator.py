@@ -11,9 +11,8 @@ from toolkitui import executor, storage
 def schedule_scenario_tasks(
         api_key: str, num_scenarios: int
 ) -> list[celery.result.AsyncResult]:
-    with streamlit.spinner():
-        return [executor.generate_scenario_task.delay(api_key)
-                for _ in range(num_scenarios)]
+    return [executor.generate_scenario_task.delay(api_key)
+            for _ in range(num_scenarios)]
 
 
 def render_scenario(scenario: gato.entity.Scenario, container):
@@ -35,6 +34,18 @@ def update_progress(progress_bar, complete, total):
     progress_bar.progress(complete / total, text=progress_text)
 
 
+def wait_for_tasks(container, progress_bar, tasks):
+    total, complete = len(tasks), 0
+    while complete < total:
+        for task in get_complete_tasks(tasks):
+            scenario = task.get()
+            storage.save_scenario(scenario)
+            tasks.remove(task)
+            render_scenario(scenario, container)
+            complete += 1
+            update_progress(progress_bar, complete, total)
+
+
 def render_scenario_generator():
     streamlit.header("Generate Scenarios")
     api_key = os.environ.get("OPENAI_API_KEY")
@@ -44,21 +55,14 @@ def render_scenario_generator():
         min_value=1, value=1,
     )
     if streamlit.button("Generate Scenarios"):
-        scenario_tasks = schedule_scenario_tasks(api_key, num_scenarios)
+        with streamlit.spinner():
+            scenario_tasks = schedule_scenario_tasks(api_key, num_scenarios)
 
         progress_text = f"Waiting for {num_scenarios} tasks. Please wait."
         progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
-        complete = 0
         with streamlit.spinner():
-            while complete < num_scenarios:
-                for task in get_complete_tasks(scenario_tasks):
-                    scenario = task.get()
-                    storage.save_scenario(scenario)
-                    scenario_tasks.remove(task)
-                    render_scenario(scenario, container)
-                    complete += 1
-                    update_progress(progress_bar, complete, num_scenarios)
+            wait_for_tasks(container, progress_bar, scenario_tasks)
 
 
 def main():
