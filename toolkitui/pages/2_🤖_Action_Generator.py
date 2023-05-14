@@ -42,7 +42,8 @@ def render_action(action: gato.entity.Action, container):
 
 def render_action_generator():
     streamlit.header("Generate Actions")
-    api_key = streamlit.text_input("OpenAI API Key", os.environ.get("OPENAI_API_KEY"))
+    api_key = os.environ.get("OPENAI_API_KEY")
+    api_key = streamlit.text_input("OpenAI API Key", value=api_key, type="password")
     action_keys = storage.list_actions()
     complete_scenarios = {key.replace("action", "scenario") for key in action_keys}
     all_scenarios = set(storage.list_scenarios())
