@@ -11,20 +11,10 @@ from toolkitui import executor, storage
 def schedule_scenario_tasks(
         api_key: str, num_scenarios: int
 ) -> list[celery.result.AsyncResult]:
-    progress_text = f"Scheduling {num_scenarios} scenarios. Please wait."
-    my_bar = streamlit.progress(0, text=progress_text)
-
     scenario_tasks = []
     for k in range(num_scenarios):
         task = executor.generate_scenario_task.delay(api_key)
         scenario_tasks.append(task)
-        progress = (k + 1) / num_scenarios
-        if progress == 1:
-            progress_text = f"Scheduled {num_scenarios} scenarios."
-        else:
-            progress_text = f"Scheduled {k + 1} of {num_scenarios} scenario." \
-                            f" Please wait."
-        my_bar.progress((k + 1) / num_scenarios, text=progress_text)
     return scenario_tasks
 
 
@@ -45,6 +35,8 @@ def render_scenario_generator():
     if streamlit.button("Generate Scenarios"):
         scenario_tasks = schedule_scenario_tasks(api_key, num_scenarios)
 
+        progress_text = f"Scheduling {num_scenarios} scenarios. Please wait."
+        progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
         done = 0
         with streamlit.spinner():
@@ -57,6 +49,13 @@ def render_scenario_generator():
                     scenario_tasks.remove(task)
                     render_scenario(scenario, container)
                     done += 1
+                    progress = done / num_scenarios
+                    if progress == 1:
+                        progress_text = f"Completed {num_scenarios} scenarios."
+                    else:
+                        progress_text = f"Completed {done} of {num_scenarios} " \
+                                        f"scenario. Please wait."
+                    progress_bar.progress(done / num_scenarios, text=progress_text)
 
 
 def main():

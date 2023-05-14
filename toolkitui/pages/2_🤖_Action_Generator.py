@@ -13,10 +13,6 @@ def schedule_action_tasks(
         api_key: str,
         scenarios: list[gato.entity.Scenario],
 ) -> list[celery.result.AsyncResult]:
-    num_actions = len(scenarios)
-    progress_text = f"Scheduling {num_actions} actions. Please wait."
-    my_bar = streamlit.progress(0, text=progress_text)
-
     action_tasks = []
     with streamlit.spinner():
         for k, scenario in enumerate(scenarios):
@@ -24,13 +20,6 @@ def schedule_action_tasks(
                 api_key, json.loads(scenario.json()),
             )
             action_tasks.append(task)
-            progress = (k + 1) / num_actions
-            if progress == 1:
-                progress_text = f"Scheduled {num_actions} actions."
-            else:
-                progress_text = f"Scheduled {k + 1} of {num_actions} actions." \
-                                f" Please wait."
-            my_bar.progress((k + 1) / num_actions, text=progress_text)
     return action_tasks
 
 
@@ -56,6 +45,9 @@ def render_action_generator():
         scenarios = list(filter(lambda s: s.id in choices, all_scenarios))
         action_tasks = schedule_action_tasks(api_key, scenarios)
 
+        num_actions = len(scenarios)
+        progress_text = f"Scheduling {num_actions} actions. Please wait."
+        progress_bar = streamlit.progress(0, text=progress_text)
         container = streamlit.container()
         done = 0
         with streamlit.spinner():
@@ -69,6 +61,13 @@ def render_action_generator():
                     action_tasks.remove(task)
                     render_action(action, container)
                     done += 1
+                    progress = done / num_actions
+                    if progress == 1:
+                        progress_text = f"Completed {num_actions} actions."
+                    else:
+                        progress_text = f"Completed {done} of {num_actions} actions." \
+                                        f" Please wait."
+                    progress_bar.progress(done / num_actions, text=progress_text)
 
 
 def main():
