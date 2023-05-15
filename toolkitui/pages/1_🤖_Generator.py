@@ -56,7 +56,7 @@ def wait_for_results(progress_bar, tasks):
             time.sleep(0.1)
 
 
-def render_scenario_generator():
+def render_scenario_generator(api_key: str):
     streamlit.header("Generate Scenarios")
     num_scenarios = streamlit.number_input(
         "Number of scenarios to generate",
@@ -81,7 +81,7 @@ def render_action(action: gato.entity.Action, container):
     container.divider()
 
 
-def render_action_generator():
+def render_action_generator(api_key: str):
     streamlit.header("Generate Actions")
     action_keys = storage.list_actions()
     complete_scenarios = {key.replace("action", "scenario") for key in action_keys}
@@ -112,9 +112,9 @@ def main():
     api_key = streamlit.text_input("OpenAI API Key", value=api_key, type="password")
     tabs = streamlit.tabs(["Scenarios", "Actions"])
     with tabs[0]:
-        render_scenario_generator()
+        render_scenario_generator(api_key)
     with tabs[1]:
-        render_action_generator()
+        render_action_generator(api_key)
 
 
 if __name__ == '__main__':
